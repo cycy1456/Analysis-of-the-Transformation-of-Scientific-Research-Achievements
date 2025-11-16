@@ -1,0 +1,731 @@
+{
+  "name": "科研成果转化分析智能体",
+  "description": "针对不同成熟度科研成果（学生成果/成熟成果）提供差异化分析流程的多分支工作流",
+  "trigger": {
+    "type": "message",
+    "config": {
+      "keyword": "成果转化分析",
+      "enable": true
+    }
+  },
+  "nodes": [
+    // 启动节点
+    {
+      "id": "start",
+      "type": "start",
+      "name": "工作流启动",
+      "position": [100, 100],
+      "next": "basic_info_collection"
+    },
+    // 基础信息采集
+    {
+      "id": "basic_info_collection",
+      "type": "interaction",
+      "name": "成果基础信息采集",
+      "position": [300, 100],
+      "config": {
+        "form": [
+          {
+            "key": "achievement_name",
+            "label": "成果名称",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "achievement_owner",
+            "label": "成果所属",
+            "type": "radio",
+            "options": [
+              {"label": "学生（含研究生）", "value": "student"},
+              {"label": "科研团队/企业", "value": "mature"}
+            ],
+            "required": true
+          },
+          {
+            "key": "tech_field",
+            "label": "技术领域",
+            "type": "select",
+            "options": [
+              {"label": "信息技术", "value": "it"},
+              {"label": "生物医药", "value": "biomed"},
+              {"label": "新材料", "value": "new_material"},
+              {"label": "节能环保", "value": "energy_saving"},
+              {"label": "其他", "value": "other"}
+            ],
+            "required": true
+          },
+          {
+            "key": "completion_stage",
+            "label": "完成阶段",
+            "type": "select",
+            "options": [
+              {"label": "理论研究", "value": "theory"},
+              {"label": "实验验证", "value": "experiment"},
+              {"label": "原型开发", "value": "prototype"},
+              {"label": "小批量生产", "value": "pilot"},
+              {"label": "规模化生产", "value": "mass_production"}
+            ],
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["basic_info"],
+      "next": "achievement_type_branch"
+    },
+    // 成果类型分支节点
+    {
+      "id": "achievement_type_branch",
+      "type": "condition",
+      "name": "成果类型分支判断",
+      "position": [500, 100],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{basic_info.achievement_owner}} == 'student'",
+            "next": "student_achievement_init"
+          },
+          {
+            "expression": "{{basic_info.achievement_owner}} == 'mature'",
+            "next": "mature_achievement_init"
+          }
+        ]
+      },
+      "next": ""
+    },
+    // 学生成果分支
+    {
+      "id": "student_achievement_init",
+      "type": "interaction",
+      "name": "学生成果补充信息",
+      "position": [500, 300],
+      "config": {
+        "message": "请补充学生成果相关信息（用于生成简单分析报告）",
+        "form": [
+          {
+            "key": "student_level",
+            "label": "学历层次",
+            "type": "select",
+            "options": [
+              {"label": "本科生", "value": "undergraduate"},
+              {"label": "硕士研究生", "value": "master"},
+              {"label": "博士研究生", "value": "phd"}
+            ],
+            "required": true
+          },
+          {
+            "key": "project_source",
+            "label": "项目来源",
+            "type": "select",
+            "options": [
+              {"label": "课程设计", "value": "course"},
+              {"label": "竞赛项目", "value": "competition"},
+              {"label": "导师课题子项", "value": "tutor_project"},
+              {"label": "自主研发", "value": "independent"}
+            ],
+            "required": true
+          },
+          {
+            "key": "innovation_points",
+            "label": "主要创新点（1-3条）",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "expected_application",
+            "label": "预期应用方向",
+            "type": "text",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["student_achievement_info"],
+      "next": "student_simple_report_generate"
+    },
+    {
+      "id": "student_simple_report_generate",
+      "type": "interaction",
+      "name": "学生成果简单报告生成",
+      "position": [700, 300],
+      "config": {
+        "message": "请基于以下信息生成简单分析报告：\n成果名称：{{basic_info.achievement_name}}\n技术领域：{{basic_info.tech_field}}\n完成阶段：{{basic_info.completion_stage}}\n创新点：{{student_achievement_info.innovation_points}}",
+        "form": [
+          {
+            "key": "report_summary",
+            "label": "成果概要（200字以内）",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "advantage_analysis",
+            "label": "优势分析",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "improvement_suggestion",
+            "label": "改进建议",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "further_research_direction",
+            "label": "后续研究方向",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["student_simple_report"],
+      "next": "student_report_feedback"
+    },
+    {
+      "id": "student_report_feedback",
+      "type": "interaction",
+      "name": "学生报告反馈与优化",
+      "position": [900, 300],
+      "config": {
+        "message": "是否需要对报告进行调整？",
+        "form": [
+          {
+            "key": "is_optimize",
+            "label": "是否优化",
+            "type": "radio",
+            "options": [
+              {"label": "是", "value": "yes"},
+              {"label": "否", "value": "no"}
+            ],
+            "required": true
+          },
+          {
+            "key": "optimize_suggestion",
+            "label": "优化建议（选择是时填写）",
+            "type": "textarea",
+            "required": false
+          }
+        ]
+      },
+      "outputs": ["student_report_feedback_info"],
+      "next": "student_final_report"
+    },
+    {
+      "id": "student_final_report",
+      "type": "interaction",
+      "name": "学生成果最终报告",
+      "position": [1100, 300],
+      "config": {
+        "message": "请确认最终报告内容：\n{{student_simple_report.report_summary}}\n{{student_simple_report.advantage_analysis}}\n{{student_simple_report.improvement_suggestion}}\n{{student_simple_report.further_research_direction}}",
+        "form": [
+          {
+            "key": "final_report_content",
+            "label": "最终报告内容",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "report_format",
+            "label": "报告格式",
+            "type": "select",
+            "options": [
+              {"label": "文本", "value": "text"},
+              {"label": "PDF", "value": "pdf"}
+            ],
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["student_final_report_info"],
+      "next": "global_feedback"
+    },
+    // 成熟成果分支
+    {
+      "id": "mature_achievement_init",
+      "type": "interaction",
+      "name": "成熟成果详细信息采集",
+      "position": [500, 700],
+      "config": {
+        "message": "请补充成熟成果的详细信息（用于生成专业分析报告）",
+        "form": [
+          {
+            "key": "team_info",
+            "label": "研发团队信息",
+            "type": "text",
+            "required": true,
+            "placeholder": "团队负责人+核心成员背景"
+          },
+          {
+            "key": "research_duration",
+            "label": "研发时长",
+            "type": "text",
+            "required": true,
+            "placeholder": "如：3年"
+          },
+          {
+            "key": "intellectual_property",
+            "label": "知识产权状况",
+            "type": "checkbox",
+            "options": [
+              {"label": "已申请专利", "value": "patent_applied"},
+              {"label": "已授权专利", "value": "patent_authorized"},
+              {"label": "软件著作权", "value": "software_copyright"},
+              {"label": "未申请", "value": "none"}
+            ],
+            "required": true
+          },
+          {
+            "key": "investment_situation",
+            "label": "已投入资金",
+            "type": "text",
+            "required": true,
+            "placeholder": "如：500万元"
+          },
+          {
+            "key": "test_data",
+            "label": "核心测试数据",
+            "type": "textarea",
+            "required": true,
+            "placeholder": "关键性能指标及验证数据"
+          },
+          {
+            "key": "existing_partners",
+            "label": "现有合作方",
+            "type": "text",
+            "required": false
+          }
+        ]
+      },
+      "outputs": ["mature_achievement_info"],
+      "next": "mature_analysis_demand"
+    },
+    {
+      "id": "mature_analysis_demand",
+      "type": "interaction",
+      "name": "成熟成果分析需求选择",
+      "position": [700, 700],
+      "config": {
+        "message": "请选择需要的分析类型（可多选）",
+        "form": [
+          {
+            "key": "analysis_type",
+            "label": "分析类型",
+            "type": "checkbox",
+            "options": [
+              {"label": "市场前景分析", "value": "market_analysis"},
+              {"label": "技术成熟度评估", "value": "tech_maturity"},
+              {"label": "商业化路径设计", "value": "commercial_path"},
+              {"label": "投资价值分析", "value": "investment_value"},
+              {"label": "风险评估与应对", "value": "risk_assessment"}
+            ],
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["mature_analysis需求"],
+      "next": "mature_analysis_branch"
+    },
+    {
+      "id": "mature_analysis_branch",
+      "type": "condition",
+      "name": "成熟成果分析分支",
+      "position": [900, 700],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} contains 'market_analysis'",
+            "next": "market_analysis_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'market_analysis' && {{mature_analysis需求.analysis_type}} contains 'tech_maturity'",
+            "next": "tech_maturity_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'market_analysis' && {{mature_analysis需求.analysis_type}} not contains 'tech_maturity' && {{mature_analysis需求.analysis_type}} contains 'commercial_path'",
+            "next": "commercial_path_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'market_analysis' && {{mature_analysis需求.analysis_type}} not contains 'tech_maturity' && {{mature_analysis需求.analysis_type}} not contains 'commercial_path' && {{mature_analysis需求.analysis_type}} contains 'investment_value'",
+            "next": "investment_value_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'market_analysis' && {{mature_analysis需求.analysis_type}} not contains 'tech_maturity' && {{mature_analysis需求.analysis_type}} not contains 'commercial_path' && {{mature_analysis需求.analysis_type}} not contains 'investment_value' && {{mature_analysis需求.analysis_type}} contains 'risk_assessment'",
+            "next": "risk_assessment_node"
+          }
+        ]
+      },
+      "next": ""
+    },
+    // 市场前景分析节点
+    {
+      "id": "market_analysis_node",
+      "type": "interaction",
+      "name": "市场前景分析",
+      "position": [1100, 500],
+      "config": {
+        "message": "请填写市场前景分析内容",
+        "form": [
+          {
+            "key": "target_market",
+            "label": "目标市场定位",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "market_size",
+            "label": "市场规模估算",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "competitor_analysis",
+            "label": "竞争对手分析",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "market_entry_strategy",
+            "label": "市场进入策略",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["market_analysis_result"],
+      "next": "tech_maturity_check"
+    },
+    // 技术成熟度评估节点
+    {
+      "id": "tech_maturity_node",
+      "type": "interaction",
+      "name": "技术成熟度评估",
+      "position": [1100, 700],
+      "config": {
+        "message": "请进行技术成熟度评估（参考TRL等级）",
+        "form": [
+          {
+            "key": "trl_level",
+            "label": "当前技术成熟度等级（1-9级）",
+            "type": "select",
+            "options": [
+              {"label": "1级：基本原理确定", "value": "trl1"},
+              {"label": "3级：实验室验证", "value": "trl3"},
+              {"label": "5级：相关环境验证", "value": "trl5"},
+              {"label": "7级：系统原型演示", "value": "trl7"},
+              {"label": "9级：实际应用验证", "value": "trl9"}
+            ],
+            "required": true
+          },
+          {
+            "key": "maturity_gap",
+            "label": "成熟度差距分析",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "maturity_improve_plan",
+            "label": "成熟度提升计划",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["tech_maturity_result"],
+      "next": "commercial_path_check"
+    },
+    // 商业化路径设计节点
+    {
+      "id": "commercial_path_node",
+      "type": "interaction",
+      "name": "商业化路径设计",
+      "position": [1100, 900],
+      "config": {
+        "message": "请设计商业化实施路径",
+        "form": [
+          {
+            "key": "business_model",
+            "label": "商业模式设计",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "revenue_model",
+            "label": "盈利模式",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "implementation_steps",
+            "label": "实施步骤与时间表",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "resource_requirement",
+            "label": "所需资源",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["commercial_path_result"],
+      "next": "investment_value_check"
+    },
+    // 投资价值分析节点
+    {
+      "id": "investment_value_node",
+      "type": "interaction",
+      "name": "投资价值分析",
+      "position": [1300, 700],
+      "config": {
+        "message": "请进行投资价值评估",
+        "form": [
+          {
+            "key": "investment_return",
+            "label": "预期投资回报",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "growth_potential",
+            "label": "成长潜力分析",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "valuation_analysis",
+            "label": "估值分析",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "investor_type",
+            "label": "适合的投资者类型",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["investment_value_result"],
+      "next": "risk_assessment_check"
+    },
+    // 风险评估与应对节点
+    {
+      "id": "risk_assessment_node",
+      "type": "interaction",
+      "name": "风险评估与应对",
+      "position": [1500, 700],
+      "config": {
+        "message": "请分析潜在风险及应对措施",
+        "form": [
+          {
+            "key": "technical_risk",
+            "label": "技术风险及应对",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "market_risk",
+            "label": "市场风险及应对",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "policy_risk",
+            "label": "政策风险及应对",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "financial_risk",
+            "label": "财务风险及应对",
+            "type": "textarea",
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["risk_assessment_result"],
+      "next": "mature_report_integration"
+    },
+    // 成熟成果分析流转节点
+    {
+      "id": "tech_maturity_check",
+      "type": "condition",
+      "name": "技术成熟度分析检查",
+      "position": [1300, 500],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} contains 'tech_maturity'",
+            "next": "tech_maturity_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'tech_maturity'",
+            "next": "commercial_path_check"
+          }
+        ]
+      },
+      "next": ""
+    },
+    {
+      "id": "commercial_path_check",
+      "type": "condition",
+      "name": "商业化路径分析检查",
+      "position": [1300, 700],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} contains 'commercial_path'",
+            "next": "commercial_path_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'commercial_path'",
+            "next": "investment_value_check"
+          }
+        ]
+      },
+      "next": ""
+    },
+    {
+      "id": "investment_value_check",
+      "type": "condition",
+      "name": "投资价值分析检查",
+      "position": [1300, 900],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} contains 'investment_value'",
+            "next": "investment_value_node"
+          },
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} not contains 'investment_value'",
+            "next": "risk_assessment_check"
+          }
+        ]
+      },
+      "next": ""
+    },
+    {
+      "id": "risk_assessment_check",
+      "type": "condition",
+      "name": "风险评估分析检查",
+      "position": [1500, 900],
+      "config": {
+        "conditions": [
+          {
+            "expression": "{{mature_analysis需求.analysis_type}} contains 'risk_assessment' && !{{risk_assessment_result}}",
+            "next": "risk_assessment_node"
+          },
+          {
+            "expression": "true",
+            "next": "mature_report_integration"
+          }
+        ]
+      },
+      "next": ""
+    },
+    // 成熟成果报告整合
+    {
+      "id": "mature_report_integration",
+      "type": "interaction",
+      "name": "成熟成果报告整合",
+      "position": [1700, 700],
+      "config": {
+        "message": "请整合所有分析内容，生成最终报告",
+        "form": [
+          {
+            "key": "executive_summary",
+            "label": "执行摘要",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "full_report_content",
+            "label": "完整报告内容",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "key_conclusion",
+            "label": "核心结论与建议",
+            "type": "textarea",
+            "required": true
+          },
+          {
+            "key": "report_format",
+            "label": "报告格式",
+            "type": "select",
+            "options": [
+              {"label": "Word文档", "value": "docx"},
+              {"label": "PDF文档", "value": "pdf"},
+              {"label": "PPT演示文稿", "value": "ppt"}
+            ],
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["mature_final_report"],
+      "next": "global_feedback"
+    },
+    // 全局反馈节点
+    {
+      "id": "global_feedback",
+      "type": "interaction",
+      "name": "用户反馈采集",
+      "position": [1300, 100],
+      "config": {
+        "message": "本次分析服务是否满足你的需求？请提供反馈意见",
+        "form": [
+          {
+            "key": "satisfaction",
+            "label": "满意度评分",
+            "type": "rating",
+            "required": true
+          },
+          {
+            "key": "feedback_content",
+            "label": "具体反馈意见",
+            "type": "textarea",
+            "required": false
+          },
+          {
+            "key": "need_followup",
+            "label": "是否需要后续服务",
+            "type": "radio",
+            "options": [
+              {"label": "是", "value": "yes"},
+              {"label": "否", "value": "no"}
+            ],
+            "required": true
+          }
+        ]
+      },
+      "outputs": ["user_feedback_info"],
+      "next": "global_end"
+    },
+    // 结束节点
+    {
+      "id": "global_end",
+      "type": "end",
+      "name": "工作流终止",
+      "position": [1500, 100],
+      "config": {}
+    }
+  ],
+  "variables": [
+    {"name": "basic_info", "type": "object", "description": "成果基础信息"},
+    {"name": "student_achievement_info", "type": "object", "description": "学生成果补充信息"},
+    {"name": "student_simple_report", "type": "object", "description": "学生成果简单报告"},
+    {"name": "student_report_feedback_info", "type": "object", "description": "学生报告反馈信息"},
+    {"name": "student_final_report_info", "type": "object", "description": "学生成果最终报告"},
+    {"name": "mature_achievement_info", "type": "object", "description": "成熟成果详细信息"},
+    {"name": "mature_analysis需求", "type": "object", "description": "成熟成果分析需求"},
+    {"name": "market_analysis_result", "type": "object", "description": "市场前景分析结果"},
+    {"name": "tech_maturity_result", "type": "object", "description": "技术成熟度评估结果"},
+    {"name": "commercial_path_result", "type": "object", "description": "商业化路径设计结果"},
+    {"name": "investment_value_result", "type": "object", "description": "投资价值分析结果"},
+    {"name": "risk_assessment_result", "type": "object", "description": "风险评估与应对结果"},
+    {"name": "mature_final_report", "type": "object", "description": "成熟成果最终报告"},
+    {"name": "user_feedback_info", "type": "object", "description": "用户反馈信息"}
+  ],
+  "version": "1.0.0",
+  "create_time": "2025-11-18",
+  "update_time": "2025-11-18"
+}

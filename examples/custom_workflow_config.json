@@ -1,0 +1,228 @@
+{
+  "name": "自定义科研成果转化分析工作流",
+  "description": "用于特定领域科研成果分析的自定义工作流配置示例",
+  "triggers": [
+    {
+      "type": "manual",
+      "description": "手动触发分析流程"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "name": "开始分析",
+      "description": "启动科研成果转化分析流程",
+      "config": {
+        "welcome_message": "欢迎使用自定义科研成果转化分析工具！\n本工具将帮助您评估科研成果的转化潜力。"
+      },
+      "next_nodes": ["collect_info"]
+    },
+    {
+      "id": "collect_info",
+      "type": "interaction",
+      "name": "收集基础信息",
+      "description": "收集科研成果的基本信息",
+      "config": {
+        "message": "请提供以下科研成果基本信息：",
+        "form": {
+          "title": {
+            "type": "text",
+            "label": "成果名称",
+            "required": true,
+            "description": "请输入您的科研成果名称"
+          },
+          "field": {
+            "type": "text",
+            "label": "所属领域",
+            "required": true,
+            "description": "例如：人工智能、生物医药、新材料等"
+          },
+          "maturity": {
+            "type": "select",
+            "label": "成果成熟度",
+            "required": true,
+            "options": [
+              {"value": "concept", "label": "概念阶段"},
+              {"value": "lab", "label": "实验室阶段"},
+              {"value": "prototype", "label": "原型阶段"},
+              {"value": "market_ready", "label": "市场就绪"}
+            ],
+            "description": "请选择您的成果当前所处的阶段"
+          },
+          "description": {
+            "type": "textarea",
+            "label": "成果描述",
+            "required": true,
+            "description": "请简要描述您的科研成果及其创新点"
+          }
+        }
+      },
+      "next_nodes": ["check_maturity"]
+    },
+    {
+      "id": "check_maturity",
+      "type": "condition",
+      "name": "成熟度评估",
+      "description": "根据成果成熟度决定后续分析路径",
+      "config": {
+        "conditions": [
+          {
+            "expression": "maturity == 'market_ready' || maturity == 'prototype'",
+            "next_node": "patent_check"
+          },
+          {
+            "expression": "maturity == 'lab' || maturity == 'concept'",
+            "next_node": "development_plan"
+          }
+        ]
+      },
+      "next_nodes": ["patent_check", "development_plan"]
+    },
+    {
+      "id": "patent_check",
+      "type": "interaction",
+      "name": "专利情况",
+      "description": "收集专利相关信息",
+      "config": {
+        "message": "请提供以下专利相关信息：",
+        "form": {
+          "has_patent": {
+            "type": "boolean",
+            "label": "是否已有专利",
+            "required": true,
+            "description": "您的成果是否已经申请或获得专利保护？"
+          },
+          "patent_number": {
+            "type": "text",
+            "label": "专利号",
+            "required": false,
+            "description": "如果已有专利，请输入专利号",
+            "condition": "has_patent == true"
+          },
+          "patent_status": {
+            "type": "select",
+            "label": "专利状态",
+            "required": false,
+            "options": [
+              {"value": "applied", "label": "已申请"},
+              {"value": "granted", "label": "已授权"}
+            ],
+            "description": "请选择专利状态",
+            "condition": "has_patent == true"
+          }
+        }
+      },
+      "next_nodes": ["market_analysis"]
+    },
+    {
+      "id": "development_plan",
+      "type": "interaction",
+      "name": "发展规划",
+      "description": "收集成果发展规划信息",
+      "config": {
+        "message": "请提供以下发展规划信息：",
+        "form": {
+          "development_timeline": {
+            "type": "textarea",
+            "label": "发展时间表",
+            "required": true,
+            "description": "请描述您计划如何推进该成果的发展"
+          },
+          "resource_needs": {
+            "type": "textarea",
+            "label": "资源需求",
+            "required": true,
+            "description": "您认为该成果发展需要哪些资源支持？"
+          }
+        }
+      },
+      "next_nodes": ["recommendation"]
+    },
+    {
+      "id": "market_analysis",
+      "type": "interaction",
+      "name": "市场分析",
+      "description": "收集市场相关信息",
+      "config": {
+        "message": "请提供以下市场相关信息：",
+        "form": {
+          "target_audience": {
+            "type": "textarea",
+            "label": "目标受众",
+            "required": true,
+            "description": "您的成果主要面向哪些用户或市场？"
+          },
+          "market_potential": {
+            "type": "select",
+            "label": "市场潜力评估",
+            "required": true,
+            "options": [
+              {"value": "high", "label": "高"},
+              {"value": "medium", "label": "中"},
+              {"value": "low", "label": "低"}
+            ],
+            "description": "您认为该成果的市场潜力如何？"
+          }
+        }
+      },
+      "next_nodes": ["recommendation"]
+    },
+    {
+      "id": "recommendation",
+      "type": "interaction",
+      "name": "转化建议",
+      "description": "提供转化建议",
+      "config": {
+        "message": "基于收集到的信息，我们将为您提供转化建议。\n请提供以下补充信息：",
+        "form": {
+          "preferred_path": {
+            "type": "select",
+            "label": "偏好的转化路径",
+            "required": true,
+            "options": [
+              {"value": "startup", "label": "创办企业"},
+              {"value": "license", "label": "技术许可"},
+              {"value": "cooperation", "label": "产学研合作"},
+              {"value": "internal", "label": "校内转化"},
+              {"value": "none", "label": "尚未确定"}
+            ],
+            "description": "您更倾向于哪种转化方式？"
+          },
+          "additional_info": {
+            "type": "textarea",
+            "label": "补充说明",
+            "required": false,
+            "description": "如有其他需要说明的情况，请在此补充"
+          }
+        }
+      },
+      "next_nodes": ["end"]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "name": "结束分析",
+      "description": "完成科研成果转化分析",
+      "config": {
+        "message": "感谢您使用科研成果转化分析工具！\n基于您提供的信息，我们已生成分析报告。\n您可以参考以下建议进行成果转化：\n1. 继续完善技术细节和专利布局\n2. 开展市场调研，验证用户需求\n3. 制定详细的商业计划\n4. 寻找合适的合作伙伴或投资方"
+      },
+      "next_nodes": []
+    }
+  ],
+  "variables": {
+    "成果信息": {
+      "type": "object",
+      "description": "收集的科研成果基本信息"
+    },
+    "专利信息": {
+      "type": "object",
+      "description": "专利相关信息"
+    },
+    "市场信息": {
+      "type": "object",
+      "description": "市场分析相关信息"
+    }
+  },
+  "version": "1.0"
+}

@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+env_test/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+logfile
+
+# Config
+config/local_config.json
+config/secrets.json
+.env
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Test
+.pytest_cache/
+coverage/
+
+# API keys and secrets
+secrets/
+api_keys/
+
+# Temporary files
+*.tmp
+*.temp
