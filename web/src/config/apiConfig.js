@@ -31,7 +31,7 @@ export const getApiUrl = (endpoint) => {
 export const API_TIMEOUT = 30000;
 
 // 是否启用模拟数据（用于离线开发或演示）
-export const USE_MOCK_DATA = false;
+export const USE_MOCK_DATA = true;
 
 export default {
   API_BASE_URL,
