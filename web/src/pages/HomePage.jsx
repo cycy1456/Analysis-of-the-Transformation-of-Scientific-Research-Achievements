@@ -15,6 +15,7 @@ import FileUploadIcon from '@mui/icons-material/FileUpload'
 import DescriptionIcon from '@mui/icons-material/Description'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import LightbulbIcon from '@mui/icons-material/Lightbulb'
+import MessageIcon from '@mui/icons-material/Message'
 
 function HomePage() {
   const navigate = useNavigate()
@@ -236,20 +237,33 @@ function HomePage() {
       </Paper>
 
       {/* CTA */}
-      <Box textAlign="center">
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleStartAnalysis}
-          endIcon={<ArrowRightIcon />}
-          sx={{ 
-            py: 1.5, 
-            px: 6, 
-            fontSize: 16 
-          }}
-        >
-          立即开始分析
-        </Button>
+      <Box textAlign="center" sx={{ mt: 8, mb: 12 }}>
+        <Typography variant="h4" align="center" gutterBottom>
+          立即开始体验
+        </Typography>
+        <Typography variant="subtitle1" color="text.secondary" align="center" sx={{ mb: 4 }}>
+          选择适合您的方式，获取科研成果转化支持
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleStartAnalysis}
+            endIcon={<ArrowRightIcon />}
+            sx={{ px: 4, py: 1.5 }}
+          >
+            开始分析
+          </Button>
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={() => navigate('/chat')}
+            startIcon={<MessageIcon />}
+            sx={{ px: 4, py: 1.5 }}
+          >
+            在线咨询
+          </Button>
+        </Box>
       </Box>
     </Container>
   )
