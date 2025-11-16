@@ -15,65 +15,55 @@ import {
   Card,
   CardContent,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Alert,
+  ButtonGroup
 } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import MessageIcon from '@mui/icons-material/Message'
 import HelpIcon from '@mui/icons-material/Help'
-import { mockChatResponses } from '../config/mockData'
+import RefreshIcon from '@mui/icons-material/Refresh'
+import WifiOffIcon from '@mui/icons-material/WifiOff'
+import WifiIcon from '@mui/icons-material/Wifi'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 function ChatPage() {
-  const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  
+  // 使用WebSocket Hook
+  const {
+    isConnected,
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    reconnect,
+    disconnect
+  } = useWebSocket()
 
-  // 初始欢迎消息
+  // 检测连接状态变化
   useEffect(() => {
-    const welcomeMessage = {
-      id: 1,
-      text: '您好！我是科研成果转化分析智能体，很高兴为您提供服务。您可以咨询关于科研成果转化的问题，或者点击"开始分析"获取详细的成果评估。',
-      sender: 'bot'
+    if (isConnected) {
+      console.log('WebSocket连接成功');
+    } else {
+      console.log('WebSocket连接断开');
     }
-    setMessages([welcomeMessage])
-  }, [])
+  }, [isConnected])
 
   // 处理发送消息
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return
-
-    // 添加用户消息
-    const userMessage = {
-      id: Date.now(),
-      text: inputMessage.trim(),
-      sender: 'user'
-    }
-    setMessages(prev => [...prev, userMessage])
+    
+    // 保存输入内容，因为我们会清空输入框
+    const message = inputMessage.trim();
+    
+    // 清空输入框
     setInputMessage('')
-    setIsLoading(true)
-
-    // 模拟AI响应延迟
-    setTimeout(() => {
-      // 根据用户输入查找最匹配的响应
-      let botResponseText = mockChatResponses['默认']
-      
-      // 尝试找到精确匹配
-      Object.keys(mockChatResponses).forEach(key => {
-        if (inputMessage.toLowerCase().includes(key.toLowerCase())) {
-          botResponseText = mockChatResponses[key]
-        }
-      })
-
-      // 添加AI响应
-      const botMessage = {
-        id: Date.now() + 1,
-        text: botResponseText,
-        sender: 'bot'
-      }
-      setMessages(prev => [...prev, botMessage])
-      setIsLoading(false)
-    }, 800)
+    
+    // 发送消息
+    sendMessage(message)
   }
 
   // 处理按键事件
@@ -92,6 +82,30 @@ function ChatPage() {
       <Typography variant="subtitle1" color="textSecondary" align="center" sx={{ mb: 4 }}>
         直接在网页中与智能体对话，获取科研成果转化相关建议
       </Typography>
+      
+      {/* 连接状态提示 */}
+      {!isConnected && (
+        <Alert 
+          severity="warning" 
+          icon={<WifiOffIcon />}
+          action={
+            <ButtonGroup size="small">
+              <Button onClick={reconnect} startIcon={<RefreshIcon />}>重新连接</Button>
+              <Button onClick={disconnect} variant="outlined" startIcon={<WifiOffIcon />}>断开</Button>
+            </ButtonGroup>
+          }
+          sx={{ mb: 3 }}
+        >
+          连接已断开，无法进行实时对话
+        </Alert>
+      )}
+      
+      {/* 错误提示 */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
       {/* 聊天容器 */}
       <Paper elevation={3} sx={{ height: '70vh', display: 'flex', flexDirection: 'column' }}>
@@ -156,26 +170,67 @@ function ChatPage() {
 
         {/* 输入区域 */}
         <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: 'background.paper' }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            {/* 连接状态指示器 */}
+            <Box sx={{ mr: -1 }}>
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  bgcolor: isConnected ? 'success.main' : 'error.main',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%',
+                    bgcolor: isConnected ? 'success.main' : 'error.main',
+                    opacity: 0.5,
+                    animation: isConnected ? 'pulse 2s infinite' : 'none'
+                  },
+                  '@keyframes pulse': {
+                    '0%': {
+                      transform: 'scale(1)',
+                      opacity: 0.5
+                    },
+                    '100%': {
+                      transform: 'scale(2)',
+                      opacity: 0
+                    }
+                  }
+                }}
+              />
+            </Box>
+            
             <TextField
               fullWidth
               variant="outlined"
-              placeholder="输入您的问题..."
+              placeholder={isConnected ? "输入您的问题..." : "请先连接服务器..."}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               multiline
               rows={1}
               maxRows={3}
+              disabled={!isConnected}
               InputProps={{
                 disableUnderline: true,
-                sx: { bgcolor: '#f5f5f5', borderRadius: 2 }
+                sx: { 
+                  bgcolor: isConnected ? '#f5f5f5' : '#f0f0f0', 
+                  borderRadius: 2,
+                  opacity: isConnected ? 1 : 0.7
+                }
               }}
             />
             <Button
               variant="contained"
               onClick={handleSendMessage}
-              disabled={!inputMessage.trim() || isLoading}
+              disabled={!inputMessage.trim() || isLoading || !isConnected}
               endIcon={<SendIcon />}
               sx={{ minWidth: '56px', height: '56px', borderRadius: '50%' }}
             >
@@ -196,7 +251,13 @@ function ChatPage() {
           需要更详细的分析？可以尝试以下关键词：
         </Typography>
         <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
-          {Object.keys(mockChatResponses).filter(key => key !== '默认').map((keyword) => (
+          {[
+            '如何使用这个系统',
+            '什么是科研成果转化',
+            '可以分析哪些类型的科研成果',
+            '分析结果有多准确',
+            '如何提高转化成功率'
+          ].map((keyword) => (
             <Button
               key={keyword}
               variant="outlined"
@@ -204,7 +265,12 @@ function ChatPage() {
               onClick={() => {
                 setInputMessage(keyword)
               }}
-              sx={{ fontSize: '0.75rem', borderRadius: 1 }}
+              disabled={!isConnected}
+              sx={{ 
+                fontSize: '0.75rem', 
+                borderRadius: 1,
+                opacity: isConnected ? 1 : 0.7
+              }}
             >
               {keyword}
             </Button>
