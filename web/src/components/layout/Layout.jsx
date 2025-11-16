@@ -20,6 +20,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import FileUploadIcon from '@mui/icons-material/FileUpload'
 import BarChartIcon from '@mui/icons-material/BarChart'
 import InfoIcon from '@mui/icons-material/Info'
+import MessageIcon from '@mui/icons-material/Message'
 import { Link } from 'react-router-dom'
 
 function Layout({ children }) {
@@ -35,6 +36,7 @@ function Layout({ children }) {
     { text: '首页', icon: <HomeIcon />, path: '/' },
     { text: '开始分析', icon: <FileUploadIcon />, path: '/analysis' },
     { text: '分析结果', icon: <BarChartIcon />, path: '/result' },
+    { text: '在线咨询', icon: <MessageIcon />, path: '/chat' },
     { text: '关于我们', icon: <InfoIcon />, path: '/about' }
   ]
 
