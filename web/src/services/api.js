@@ -7,6 +7,7 @@ class ApiService {
     this.messageHandlers = [];
     this.connectionHandlers = [];
     this.isConnecting = false;
+    this.clientId = null;
   }
 
   // 连接WebSocket服务器
@@ -23,14 +24,18 @@ class ApiService {
       this.isConnecting = true;
       
       try {
-        // 构建WebSocket URL
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // 生成/复用客户端ID
+        if (!this.clientId) {
+          this.clientId = `client_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+        }
+
+        // 构建WebSocket URL：开发环境走Vite代理，生产环境用真实地址
+        const isProd = process.env.NODE_ENV === 'production';
         const wsBaseUrl = API_BASE_URL.replace(/^http/, 'ws');
-        const wsUrl = `${wsBaseUrl}/api/chat/ws`;
-        
-        // 开发环境时使用相对路径
-        const finalWsUrl = process.env.NODE_ENV === 'production' ? wsUrl : '/api/chat/ws';
-        
+        const prodWsUrl = `${wsBaseUrl}/ws/${this.clientId}`;
+        const devWsUrl = `/ws/${this.clientId}`;
+        const finalWsUrl = isProd ? prodWsUrl : devWsUrl;
+
         this.ws = new WebSocket(finalWsUrl);
         
         // 连接打开
@@ -81,7 +86,7 @@ class ApiService {
     }
   }
 
-  // 发送消息到服务器
+  // 发送消息到服务器（发送纯文本，后端使用 receive_text 接收）
   async sendMessage(message) {
     try {
       // 确保连接已建立
@@ -89,11 +94,7 @@ class ApiService {
         await this.connect();
       }
       
-      this.ws.send(JSON.stringify({
-        type: 'message',
-        content: message,
-        timestamp: new Date().toISOString()
-      }));
+      this.ws.send(message);
     } catch (error) {
       console.error('发送消息失败:', error);
       throw error;
@@ -102,33 +103,29 @@ class ApiService {
 
   // 注册消息处理器
   onMessage(handler) {
-    if (typeof handler === 'function') {
-      this.messageHandlers.push(handler);
-    }
+    this.messageHandlers.push(handler);
   }
 
-  // 移除消息处理器
+  // 取消注册消息处理器
   offMessage(handler) {
     this.messageHandlers = this.messageHandlers.filter(h => h !== handler);
   }
 
   // 注册连接状态处理器
   onConnectionChange(handler) {
-    if (typeof handler === 'function') {
-      this.connectionHandlers.push(handler);
-    }
+    this.connectionHandlers.push(handler);
   }
 
-  // 移除连接状态处理器
+  // 取消注册连接状态处理器
   offConnectionChange(handler) {
     this.connectionHandlers = this.connectionHandlers.filter(h => h !== handler);
   }
 
   // 通知所有消息处理器
-  notifyMessageHandlers(message) {
+  notifyMessageHandlers(data) {
     this.messageHandlers.forEach(handler => {
       try {
-        handler(message);
+        handler(data);
       } catch (error) {
         console.error('消息处理器执行错误:', error);
       }
@@ -174,27 +171,6 @@ export const httpGet = async (url, params = {}) => {
     return await response.json();
   } catch (error) {
     console.error('GET请求失败:', error);
-    throw error;
-  }
-};
-
-export const httpPost = async (url, data = {}) => {
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP错误! 状态码: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('POST请求失败:', error);
     throw error;
   }
 };
